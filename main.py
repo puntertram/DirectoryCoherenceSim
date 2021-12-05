@@ -53,7 +53,7 @@ class DirectoryController:
             if directoryState.state == 'M':
                 # Exactly one core is holding the address block in the modified state 
                 # we forward the message there 
-                self.interconnect.sendMessage(FwdGetSMessage(message.address, message.requester, "Directory"))
+                self.interconnect.sendMessage(FwdGetSMessage(message.address, message.requester, "Directory", directoryState.sharers[0]))
         except KeyError:
             pass 
 
@@ -62,8 +62,9 @@ class DirectoryController:
 
 
 class CacheController:
-    def __init__(self, interconnect: Interconnect) -> None:
+    def __init__(self, interconnect: Interconnect, identifier) -> None:
         self.cacheState = {}
+        self.identifier = identifier
         self.interconnect = interconnect
         self.loadQueue = []
         self.storeQueue = []
@@ -75,7 +76,7 @@ class CacheController:
             data = self.cacheState[address].data
         except KeyError:
             # address does not exist in the cache; get it from the directory
-            self.interconnect.sendMessage(GetSMessage(address))
+            self.interconnect.sendMessage(GetSMessage(address, self.identifier, "Directory"))
             self.cacheState[address] = CacheStateEntry(address, 'X', 'IS')
             self.state = 'BUSY'
 
